@@ -202,7 +202,7 @@ type LGFunction func(*LState) int
 
 func (fn *LFunction) String() string                     { return fmt.Sprintf("function: %p", fn) }
 func (fn *LFunction) Type() LValueType                   { return LTFunction }
-func (fn *LFunction) AssertFunction() (*LFunction, bool) { return nil, false }
+func (fn *LFunction) AssertFunction() (*LFunction, bool) { return fn, true }
 func (fn *LFunction) Index(L *LState, key string) LValue {
 	switch key {
 	default:
