@@ -18,23 +18,26 @@ const (
 	LTThread
 	LTTable
 	LTChannel
+	LTObject
 )
 
-var lValueNames = [9]string{"nil", "boolean", "number", "string", "function", "userdata", "thread", "table", "channel"}
+var lValueNames = [10]string{"nil", "boolean", "number", "string", "function", "userdata", "thread", "table", "channel", "object"}
 
 func (vt LValueType) String() string {
-	return lValueNames[int(vt)]
+	return lValueNames[vt]
 }
 
 type LValue interface {
 	String() string
 	Type() LValueType
+	AssertFunction() (*LFunction, bool)
+	Index(*LState, string) LValue
 }
 
 // LVIsFalse returns true if a given LValue is a nil or false otherwise false.
 func LVIsFalse(v LValue) bool { return v == LNil || v == LFalse }
 
-// LVIsFalse returns false if a given LValue is a nil or false otherwise true.
+// LVAsBool returns false if a given LValue is a nil or false otherwise true.
 func LVAsBool(v LValue) bool { return v != LNil && v != LFalse }
 
 // LVAsString returns string representation of a given LValue
@@ -74,28 +77,49 @@ func LVAsNumber(v LValue) LNumber {
 
 type LNilType struct{}
 
-func (nl *LNilType) String() string   { return "nil" }
-func (nl *LNilType) Type() LValueType { return LTNil }
+func (nl *LNilType) String() string                     { return "nil" }
+func (nl *LNilType) Type() LValueType                   { return LTNil }
+func (nl *LNilType) AssertFunction() (*LFunction, bool) { return nil, false }
+func (nl *LNilType) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 var LNil = LValue(&LNilType{})
 
 type LBool bool
 
 func (bl LBool) String() string {
-	if bool(bl) {
+	if bl {
 		return "true"
 	}
 	return "false"
 }
-func (bl LBool) Type() LValueType { return LTBool }
+func (bl LBool) Type() LValueType                   { return LTBool }
+func (bl LBool) AssertFunction() (*LFunction, bool) { return nil, false }
+func (bl LBool) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 var LTrue = LBool(true)
 var LFalse = LBool(false)
 
 type LString string
 
-func (st LString) String() string   { return string(st) }
-func (st LString) Type() LValueType { return LTString }
+func (st LString) String() string                     { return string(st) }
+func (st LString) Type() LValueType                   { return LTString }
+func (st LString) AssertFunction() (*LFunction, bool) { return nil, false }
+func (st LString) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 // fmt.Formatter interface
 func (st LString) Format(f fmt.State, c rune) {
@@ -118,7 +142,14 @@ func (nm LNumber) String() string {
 	return fmt.Sprint(float64(nm))
 }
 
-func (nm LNumber) Type() LValueType { return LTNumber }
+func (nm LNumber) Type() LValueType                   { return LTNumber }
+func (nm LNumber) AssertFunction() (*LFunction, bool) { return nil, false }
+func (nm LNumber) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 // fmt.Formatter interface
 func (nm LNumber) Format(f fmt.State, c rune) {
@@ -150,8 +181,15 @@ type LTable struct {
 	k2i     map[LValue]int
 }
 
-func (tb *LTable) String() string   { return fmt.Sprintf("table: %p", tb) }
-func (tb *LTable) Type() LValueType { return LTTable }
+func (tb *LTable) String() string                     { return fmt.Sprintf("table: %p", tb) }
+func (tb *LTable) Type() LValueType                   { return LTTable }
+func (tb *LTable) AssertFunction() (*LFunction, bool) { return nil, false }
+func (tb *LTable) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 type LFunction struct {
 	IsG       bool
@@ -162,8 +200,15 @@ type LFunction struct {
 }
 type LGFunction func(*LState) int
 
-func (fn *LFunction) String() string   { return fmt.Sprintf("function: %p", fn) }
-func (fn *LFunction) Type() LValueType { return LTFunction }
+func (fn *LFunction) String() string                     { return fmt.Sprintf("function: %p", fn) }
+func (fn *LFunction) Type() LValueType                   { return LTFunction }
+func (fn *LFunction) AssertFunction() (*LFunction, bool) { return nil, false }
+func (fn *LFunction) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 type Global struct {
 	MainThread    *LState
@@ -197,8 +242,15 @@ type LState struct {
 	ctxCancelFn  context.CancelFunc
 }
 
-func (ls *LState) String() string   { return fmt.Sprintf("thread: %p", ls) }
-func (ls *LState) Type() LValueType { return LTThread }
+func (ls *LState) String() string                     { return fmt.Sprintf("thread: %p", ls) }
+func (ls *LState) Type() LValueType                   { return LTThread }
+func (ls *LState) AssertFunction() (*LFunction, bool) { return nil, false }
+func (ls *LState) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 type LUserData struct {
 	Value     interface{}
@@ -206,10 +258,24 @@ type LUserData struct {
 	Metatable LValue
 }
 
-func (ud *LUserData) String() string   { return fmt.Sprintf("userdata: %p", ud) }
-func (ud *LUserData) Type() LValueType { return LTUserData }
+func (ud *LUserData) String() string                     { return fmt.Sprintf("userdata: %p", ud) }
+func (ud *LUserData) Type() LValueType                   { return LTUserData }
+func (ud *LUserData) AssertFunction() (*LFunction, bool) { return nil, false }
+func (ud *LUserData) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
 
 type LChannel chan LValue
 
-func (ch LChannel) String() string   { return fmt.Sprintf("channel: %p", ch) }
-func (ch LChannel) Type() LValueType { return LTChannel }
+func (ch LChannel) String() string                     { return fmt.Sprintf("channel: %p", ch) }
+func (ch LChannel) Type() LValueType                   { return LTChannel }
+func (ch LChannel) AssertFunction() (*LFunction, bool) { return nil, false }
+func (ch LChannel) Index(L *LState, key string) LValue {
+	switch key {
+	default:
+		return LNil
+	}
+}
