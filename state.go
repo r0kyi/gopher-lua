@@ -1307,6 +1307,11 @@ func (ls *LState) getField(obj LValue, key LValue) LValue {
 func (ls *LState) getFieldString(obj LValue, key string) LValue {
 	curobj := obj
 	for i := 0; i < MaxTableGetLoop; i++ {
+		ret := obj.Index(ls, key)
+		if ret != LNil {
+			return ret
+		}
+
 		tb, istable := curobj.(*LTable)
 		if istable {
 			ret := tb.RawGetString(key)
@@ -1733,7 +1738,7 @@ func (ls *LState) RaiseError(format string, args ...interface{}) {
 // This function is equivalent to lua_error( http://www.lua.org/manual/5.1/manual.html#lua_error ).
 func (ls *LState) Error(lv LValue, level int) {
 	if str, ok := lv.(LString); ok {
-		ls.raiseError(level, string(str))
+		ls.raiseError(level, "%s", string(str))
 	} else {
 		if !ls.hasErrorFunc {
 			ls.closeAllUpvalues()
