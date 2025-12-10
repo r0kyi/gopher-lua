@@ -54,7 +54,7 @@ Installation
 
 .. code-block:: bash
 
-   go get github.com/yuin/gopher-lua
+   go get github.com/r0kyi/gopher-lua
 
 GopherLua supports >= Go1.9.
 
@@ -71,7 +71,7 @@ Import a package.
 .. code-block:: go
 
    import (
-       "github.com/yuin/gopher-lua"
+       "github.com/r0kyi/gopher-lua"
    )
 
 Run scripts in the VM.
@@ -104,6 +104,8 @@ type that has following methods.
 
 - ``String() string``
 - ``Type() LValueType``
+- ``AssertFunction() (*LFunction, bool)``
+- ``Index(*LState, string) LValue``
 
 
 Objects implement an LValue interface are
@@ -343,7 +345,7 @@ mymodule.go
     package mymodule
 
     import (
-        "github.com/yuin/gopher-lua"
+        "github.com/r0kyi/gopher-lua"
     )
 
     func Loader(L *lua.LState) int {
@@ -373,7 +375,7 @@ mymain.go
 
     import (
         "./mymodule"
-        "github.com/yuin/gopher-lua"
+        "github.com/r0kyi/gopher-lua"
     )
 
     func main() {
@@ -843,7 +845,7 @@ Lua has an interpreter called ``lua`` . GopherLua has an interpreter called ``gl
 
 .. code-block:: bash
 
-   go get github.com/yuin/gopher-lua/cmd/glua
+   go get github.com/r0kyi/gopher-lua/cmd/glua
 
 ``glua`` has same options as ``lua`` .
 
