@@ -56,7 +56,7 @@ Installation
 
    go get github.com/r0kyi/gopher-lua
 
-GopherLua supports >= Go1.9.
+GopherLua supports >= Go 1.24.0
 
 ----------------------------------------------------------------
 Usage
