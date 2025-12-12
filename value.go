@@ -31,7 +31,7 @@ type LValue interface {
 	String() string
 	Type() LValueType
 	AssertFunction() (*LFunction, bool)
-	Index(*LState, string) LValue
+	Index(L *LState, key string) LValue
 }
 
 // LVIsFalse returns true if a given LValue is a nil or false otherwise false.
